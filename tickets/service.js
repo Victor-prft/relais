@@ -105,6 +105,26 @@ function applyAssignmentRules(db, before, after) {
   }
 }
 
+/**
+ * Prise en charge sans agent : l'agent qui agit se l'attribue — s'il fait
+ * partie du groupe d'assignation (ou s'il n'y en a pas). Sinon on refuse avec
+ * une consigne claire plutôt que d'assigner un agent hors du groupe.
+ */
+function autoAssignActor(ctx, after) {
+  if (after.assigned_to_id || !ctx.user || ctx.user.role === 'user') return;
+  const { db } = ctx;
+  if (after.assignment_group_id) {
+    const member = db.prepare('SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?').get(after.assignment_group_id, ctx.user.id);
+    if (!member) {
+      const group = db.prepare('SELECT name FROM support_groups WHERE id = ?').get(after.assignment_group_id)?.name;
+      throw badRequest(`Vous n’êtes pas membre du groupe « ${group} » : assignez un de ses agents, ou changez de groupe`, [
+        { path: 'assigned_to_id', message: 'Obligatoire' }
+      ]);
+    }
+  }
+  after.assigned_to_id = ctx.user.id;
+}
+
 function insertRow(db, table, row) {
   const keys = Object.keys(row);
   db.prepare(`INSERT INTO ${table} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`).run(
@@ -186,15 +206,16 @@ function updateTicket(ctx, id, patch, { expectedVersion = null } = {}) {
 
     const after = { ...before, ...patch };
     if (patch.state !== undefined && patch.state !== before.state) {
-      def.workflow.assert(before.state, patch.state, { staff });
+      def.workflow.assert(before.state, patch.state, { staff, system: !ctx.user });
     }
     if (def.workflow.isTerminal(before.state)) {
       const touched = Object.keys(patch).filter((k) => patch[k] !== before[k]);
       if (touched.length) throw unprocessable(`Ticket ${def.workflow.label(before.state).toLowerCase()} : il n’est plus modifiable`);
     }
 
-    applyAssignmentRules(db, before, after);
     def.beforeUpdate?.(ctx, before, after, patch);
+    // Après les règles du type : elles peuvent poser l'agent (prise en charge).
+    applyAssignmentRules(db, before, after);
     after.priority = computePriority(after.impact, after.urgency);
 
     const fields = [...BASE_FIELDS, ...def.extFields];
@@ -237,7 +258,7 @@ function updateTicket(ctx, id, patch, { expectedVersion = null } = {}) {
   })();
 }
 
-module.exports = { createTicket, updateTicket, loadTicket, requireTicket, isStaffActor, trackedFor, BASE_FIELDS };
+module.exports = { createTicket, updateTicket, loadTicket, requireTicket, isStaffActor, trackedFor, autoAssignActor, BASE_FIELDS };
 
 // Après les exports : les abonnés requièrent ce module à leur tour.
 require('./subscribers');

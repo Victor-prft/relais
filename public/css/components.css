@@ -78,7 +78,8 @@
 /* Portail self-service : navigation horizontale, contenu centré. */
 .portal .topbar { padding: 0 var(--space-5); }
 .portal-nav { display: flex; gap: var(--space-1); }
-.portal-nav a { padding: 6px 12px; border-radius: 99px; color: var(--text-muted); font-weight: 550; }
+.portal-nav a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; color: var(--text-muted); font-weight: 550; }
+.portal-nav svg { width: 16px; height: 16px; }
 .portal-nav a.active, .portal-nav a:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
 .portal .brand { color: var(--text); padding: 0; }
 .portal .brand small { color: var(--text-muted); }

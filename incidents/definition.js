@@ -46,9 +46,9 @@ module.exports = {
     // Affecter un agent à un incident nouveau le fait passer « Assigné ».
     if (before.state === 'new' && after.state === 'new' && after.assigned_to_id) after.state = 'assigned';
 
-    // Prise en charge sans agent : l'agent qui agit se l'attribue.
-    if (['in_progress', 'on_hold', 'resolved'].includes(after.state) && !after.assigned_to_id) {
-      if (ctx.user && ctx.user.role !== 'user') after.assigned_to_id = ctx.user.id;
+    // Prise en charge sans agent : l'agent qui agit se l'attribue (s'il est du groupe).
+    if (['in_progress', 'on_hold', 'resolved'].includes(after.state) && after.state !== before.state) {
+      require('../tickets/service').autoAssignActor(ctx, after);
     }
     if (after.state === 'assigned' && !after.assigned_to_id) {
       throw badRequest('Un incident « Assigné » doit avoir un agent', [{ path: 'assigned_to_id', message: 'Obligatoire' }]);

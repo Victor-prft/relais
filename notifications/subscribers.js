@@ -13,7 +13,9 @@ const { notify, groupMembers, groupManager } = require('./service');
  */
 
 hooks.on('created', (ctx, ticket) => {
-  if (!['incident', 'request', 'request_task'].includes(ticket.type)) return;
+  if (!['incident', 'request_task'].includes(ticket.type)) return;
+  // Une tâche d'une étape ultérieure n'arrive dans la file qu'à l'ouverture de son étape.
+  if (ticket.state === 'pending') return;
   if (ticket.assigned_to_id) {
     notify(ctx, { userIds: [ticket.assigned_to_id], type: 'assigned', title: `${ticket.number} vous est assigné`, body: ticket.title, ticket });
   } else if (ticket.assignment_group_id && ticket.type !== 'request') {

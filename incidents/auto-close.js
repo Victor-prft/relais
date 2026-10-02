@@ -27,4 +27,14 @@ function autoCloseResolved(db, now = new Date()) {
   return { closed: ids.length };
 }
 
-module.exports = { autoCloseResolved };
+/** Même règle pour les demandes « Traitées » (réglage `request.auto_close_days`). */
+function autoCloseFulfilled(db, now = new Date()) {
+  const days = Number(getSetting(db, 'request.auto_close_days', 3));
+  const limit = new Date(now.getTime() - days * 86400000).toISOString();
+  const ids = db.prepare("SELECT id FROM tickets WHERE type = 'request' AND state = 'fulfilled' AND resolved_at <= ?").all(limit).map((r) => r.id);
+  const ctx = { db, user: null, now };
+  for (const id of ids) updateTicket(ctx, id, { state: 'closed' });
+  return { closed: ids.length };
+}
+
+module.exports = { autoCloseResolved, autoCloseFulfilled };

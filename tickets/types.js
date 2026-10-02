@@ -5,7 +5,9 @@
  * d'extension, son workflow et ses règles ; le service commun fait le reste.
  */
 const TYPES = {
-  incident: require('../incidents/definition')
+  incident: require('../incidents/definition'),
+  request: require('../requests/definition').request,
+  request_task: require('../requests/definition').task
 };
 
 function getType(type) {

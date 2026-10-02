@@ -7,6 +7,7 @@ import { stateBadge, priorityBadge, TYPE_LABELS } from '../../ui/badges.js';
 import { formatDateTime } from '../../format.js';
 import { setTitle } from '../../app.js';
 import { portalTicketExtras } from './ticket-extras.js';
+import { approvalsBlock, tasksBlock } from '../../ui/request-parts.js';
 
 const REQUESTER_ACTIONS = {
   closed: { label: 'Confirmer la résolution', class: 'primary', confirm: null },
@@ -17,7 +18,9 @@ const REQUESTER_ACTIONS = {
 /** Fiche d'un ticket vue du demandeur. */
 export async function portalTicketView(el, { id }) {
   mount(el, loading());
-  const [t, slas] = await Promise.all([api.get(`/api/tickets/${id}`), api.get(`/api/tickets/${id}/slas`).catch(() => ({ items: [] }))]);
+  const [base, slas] = await Promise.all([api.get(`/api/tickets/${id}`), api.get(`/api/tickets/${id}/slas`).catch(() => ({ items: [] }))]);
+  // Une demande porte en plus ses approbations et ses tâches.
+  const t = base.type === 'request' ? await api.get(`/api/requests/${id}`) : base;
   const resolution = slas.items.find((s) => s.target === 'resolution' && s.stage !== 'canceled');
   setTitle(`${t.number} · ${t.title}`);
 
@@ -74,9 +77,12 @@ export async function portalTicketView(el, { id }) {
           ['Groupe', t.assignment_group_name],
           ['Ouvert le', formatDateTime(t.opened_at)],
           resolution && resolution.stage === 'running' ? ['Objectif de résolution', formatDateTime(resolution.due_at)] : null,
-          resolution && resolution.stage === 'paused' ? ['Objectif de résolution', 'suspendu en attendant votre réponse'] : null,
+          resolution && resolution.stage === 'paused' ? ['Objectif de résolution', t.type === 'request' ? 'démarre après approbation' : 'suspendu en attendant votre réponse'] : null,
+          t.type === 'request' && t.requested_for_name ? ['Bénéficiaire', t.requested_for_name] : null,
           ['Résolu le', t.resolved_at ? formatDateTime(t.resolved_at) : null]
-        ]))
+        ])),
+        t.type === 'request' ? sideCard('Approbation', approvalsBlock(t.approvals)) : null,
+        t.type === 'request' ? sideCard('Avancement', tasksBlock(t.tasks)) : null
       )
     )
   );

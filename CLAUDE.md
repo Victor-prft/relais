@@ -83,6 +83,14 @@ les tickets dont il est demandeur ou bénéficiaire.
 - **Dashboard** : un widget = une entrée de `dashboard/widgets.js` (rôle, taille, requête) + un rendu
   dans `public/js/views/dashboard/renderers.js`. Gridstack omet x/y/w/h par défaut au `save()` :
   toujours normaliser. Sous 900 px : pile simple, pas d'enregistrement de disposition.
+- **Transitions système** (`systemTransitions`) : seules les décisions automatiques (approbation,
+  enchaînement des tâches, jobs) les franchissent ; un agent ne peut pas sortir une demande
+  « En approbation » à la main.
+- **Auto-assignation** (`autoAssignActor`) : un agent ne s'attribue un ticket à la prise en charge
+  que s'il est membre du groupe ; sinon 400 avec consigne. Le contrôle d'assignation tourne après
+  les règles du type.
+- **Approbations** (`approvals/service.js`) : la règle qui conclut est par type (`setRule`), la suite
+  aussi (`onConcluded`) — pas d'import croisé entre approbations, demandes et changements.
 - **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
   liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
@@ -152,7 +160,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 | 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | fait |
 | 4 | SLA + job planifié + notifications | v0.4.0 | fait |
 | 5 | Dashboard Gridstack + widgets | v0.5.0 | fait |
-| 6 | Catalogue de services + approbations | v0.6.0 | à faire |
+| 6 | Catalogue de services + approbations | v0.6.0 | fait |
 | 7 | Changements + calendrier | v0.7.0 | à faire |
 | 8 | Base de connaissances + IA | v0.8.0 | à faire |
 | 9 | Prod Railway (volume, env, healthcheck) | v1.0.0 | à faire |
@@ -240,3 +248,21 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 - Front : Gridstack (mode « Personnaliser » : déplacer, redimensionner, ajouter, retirer, revenir au
   défaut ; sauvegarde automatique), Chart.js (courbe monotone, barres horizontales, étiquettes directes,
   bascule tableau), redessin au changement de thème, rafraîchissement toutes les 2 min, pile sur mobile.
+
+### Phase 6 — catalogue et approbations (03/10/2026)
+- Migration `006` : catalog_items (formulaire JSON, approbation, groupe de suivi, délai),
+  catalog_item_tasks (étapes), requests, request_tasks, approvals (communes demandes / CAB).
+- Types REQ (En approbation → En cours → Traitée → Close, Rejetée, Annulée) et TASK (En attente →
+  À traiter → En cours → Terminée / Non réalisée) ; transitions système pour l'approbation.
+- Commande (`requests/catalog.js`) : formulaire validé contre le schéma de l'article, bénéficiaire
+  (soi ou un collègue), approbation du manager du bénéficiaire ou génération directe des tâches.
+  Enchaînement des étapes, demande « Traitée » à la dernière tâche, annulation en cascade,
+  clôture auto des demandes traitées (job). SLA de traitement en pause pendant l'approbation.
+- API : `/api/catalog` (articles, commande, admin), `/api/requests`, `/api/tasks`, `/api/approvals`.
+- Front : catalogue et commande côté portail (aperçu des étapes), suivi de la demande (réponses,
+  approbation, avancement des tâches), console Demandes / Tâches / Approbations (décision en un clic,
+  refus motivé), éditeur admin du catalogue (formulaire JSON avec aperçu en direct, étapes).
+- Seed : 7 articles, 14 demandes jouées sur 40 jours (approuvées, refusée, en cours, en attente).
+- Tests : validation du formulaire, demande sans / avec approbation, contournement impossible,
+  séquences de tâches, rejet, annulation, commande pour autrui, API (visibilité de l'approbateur),
+  administration du catalogue, non-régression de l'auto-assignation hors groupe.

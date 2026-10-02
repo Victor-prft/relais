@@ -22,6 +22,11 @@ module.exports = function apiRoutes(deps) {
   router.use('/cis', require('./cmdb')(deps));
   router.use('/notifications', require('./notifications')(deps));
   router.use('/dashboard', require('./dashboard')(deps));
+  router.use('/catalog', require('./catalog')(deps));
+  router.use('/approvals', require('./approvals')(deps));
+  const { requests, tasks } = require('./requests')(deps);
+  router.use('/requests', requests);
+  router.use('/tasks', tasks);
   router.use('/admin/sla', require('./admin-sla')(deps));
   router.use('/', require('./reference')(deps));
 

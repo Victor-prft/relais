@@ -8,7 +8,8 @@ const cron = require('node-cron');
  */
 const JOBS = [
   { name: 'clôture auto des incidents', schedule: '17 * * * *', run: require('../incidents/auto-close').autoCloseResolved },
-  { name: 'SLA', schedule: '*/5 * * * *', run: require('../sla/job').runSlaJob }
+  { name: 'SLA', schedule: '*/5 * * * *', run: require('../sla/job').runSlaJob },
+  { name: 'clôture auto des demandes', schedule: '19 * * * *', run: require('../incidents/auto-close').autoCloseFulfilled }
 ];
 
 function startJobs(db, log = console) {
