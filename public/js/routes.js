@@ -8,6 +8,8 @@ import { adminUsersView, adminGroupsView } from './views/admin/people.js';
 import { incidentListView } from './views/incidents/list.js';
 import { incidentFormView } from './views/incidents/form.js';
 import { goView, searchView } from './views/search.js';
+import { cmdbListView } from './views/cmdb/list.js';
+import { ciFormView } from './views/cmdb/form.js';
 
 /**
  * Table des routes et de la navigation. `space` choisit la coquille (console
@@ -18,6 +20,10 @@ export const CONSOLE_NAV = [
   {
     title: 'Service',
     items: [{ path: '/incidents', label: 'Incidents', icon: 'alert' }]
+  },
+  {
+    title: 'Configuration',
+    items: [{ path: '/cmdb', label: 'CMDB', icon: 'server' }]
   },
   {
     title: 'Administration',
@@ -42,6 +48,9 @@ export function registerRoutes() {
 
   route('/incidents', incidentListView, { title: 'Incidents', role: 'agent' });
   route('/incidents/:id', incidentFormView, { title: 'Incident', role: 'agent' });
+
+  route('/cmdb', cmdbListView, { title: 'CMDB', role: 'agent' });
+  route('/cmdb/:id', ciFormView, { title: 'Élément de configuration', role: 'agent' });
 
   route('/portal', portalHomeView, { title: 'Accueil', space: 'portal' });
   route('/portal/incident/new', portalIncidentNewView, { title: 'Signaler un problème', space: 'portal' });

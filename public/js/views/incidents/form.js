@@ -24,21 +24,24 @@ function transitionLabel(from, to) {
 }
 
 /** Fiche incident de la console (création et édition). */
-export async function incidentFormView(el, { id }) {
+export async function incidentFormView(el, { id }, query = {}) {
   mount(el, loading());
   const isNew = id === 'new';
-  const [meta, groups, categories, ticket] = await Promise.all([
+  const [meta, groups, categories, ticket, ci] = await Promise.all([
     getMeta(),
     getGroups(),
     getCategories('incident'),
-    isNew ? Promise.resolve(null) : api.get(`/api/incidents/${id}`)
+    isNew ? Promise.resolve(null) : api.get(`/api/incidents/${id}`),
+    isNew && query.ci ? api.get(`/api/cis/${encodeURIComponent(query.ci)}`).catch(() => null) : null
   ]);
-  render(el, { meta, groups, categories, ticket });
+  // Pré-remplissage depuis une fiche CI (« Déclarer un incident »).
+  const prefill = ci ? { ci_id: ci.id, ci_name: ci.name, assignment_group_id: ci.support_group_id } : {};
+  render(el, { meta, groups, categories, ticket, prefill });
 }
 
-function render(el, { meta, groups, categories, ticket }) {
+function render(el, { meta, groups, categories, ticket, prefill = {} }) {
   const isNew = !ticket;
-  const t = ticket || { impact: 3, urgency: 3, contact_type: 'phone', state: 'new', permissions: { edit: true, work_notes: true } };
+  const t = ticket || { impact: 3, urgency: 3, contact_type: 'phone', state: 'new', permissions: { edit: true, work_notes: true }, ...prefill };
   const editable = isNew || t.permissions.edit;
   setTitle(isNew ? 'Nouvel incident' : `${t.number} · ${t.title}`);
 
@@ -47,6 +50,7 @@ function render(el, { meta, groups, categories, ticket }) {
     requester_id: referenceInput({ endpoint: '/api/users', value: t.requester_id ? { id: t.requester_id, label: t.requester_name } : null, disabled: !editable }),
     contact_type: selectInput(Object.entries(meta.contact_types).map(([value, label]) => ({ value, label })), { value: t.contact_type, disabled: !editable }),
     category_id: selectInput(categoryOptions(categories), { value: t.category_id, empty: '— Choisir —', disabled: !editable }),
+    ci_id: referenceInput({ endpoint: '/api/cis', value: t.ci_id ? { id: t.ci_id, label: t.ci_name } : null, placeholder: 'Rechercher un CI…', labelOf: (ci) => ci.name, sublabelOf: (ci) => ci.class_label, disabled: !editable }),
     impact: selectInput(levelOptions, { value: t.impact, disabled: !editable }),
     urgency: selectInput(levelOptions, { value: t.urgency, disabled: !editable }),
     assignment_group_id: selectInput(groups.filter((g) => g.is_active).map((g) => ({ value: g.id, label: g.name })), { value: t.assignment_group_id, empty: '— Aucun —', disabled: !editable }),
@@ -66,6 +70,7 @@ function render(el, { meta, groups, categories, ticket }) {
     requester_id: () => c.requester_id.getValue(),
     contact_type: () => c.contact_type.value,
     category_id: () => numberOrNull(c.category_id.value),
+    ci_id: () => c.ci_id.getValue(),
     impact: () => Number(c.impact.value),
     urgency: () => Number(c.urgency.value),
     assignment_group_id: () => numberOrNull(c.assignment_group_id.value),
@@ -95,7 +100,7 @@ function render(el, { meta, groups, categories, ticket }) {
   }
   c.assignment_group_id.addEventListener('change', () => c.assigned_to_id.setParams({ group_id: c.assignment_group_id.value || undefined }));
   // Les champs référence signalent leur choix sans événement natif : on observe les suggestions.
-  for (const ref of [c.requester_id, c.assigned_to_id]) ref.addEventListener('mousedown', () => setTimeout(onEdit, 0));
+  for (const ref of [c.requester_id, c.assigned_to_id, c.ci_id]) ref.addEventListener('mousedown', () => setTimeout(onEdit, 0));
 
   async function submit(extra = {}) {
     const payload = { ...changes(), ...extra };
@@ -176,6 +181,7 @@ function render(el, { meta, groups, categories, ticket }) {
         field('Demandeur', c.requester_id, { required: true }),
         field('Canal', c.contact_type),
         field('Catégorie', c.category_id),
+        field('Élément de configuration', c.ci_id, { hint: t.ci_id ? null : 'Le service ou l’équipement touché' }),
         h('div', { class: 'grid-3 span-2' }, field('Impact', c.impact), field('Urgence', c.urgency), field('Priorité (calculée)', priorityOut)),
         field('Groupe d’assignation', c.assignment_group_id),
         field('Assigné à', c.assigned_to_id),

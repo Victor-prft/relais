@@ -32,3 +32,8 @@
   .login-points { display: none; }
   .login-card { padding: var(--space-5); }
 }
+
+/* ---------- CMDB ---------- */
+.ci-graph { width: 100%; background:
+  radial-gradient(circle, color-mix(in srgb, var(--text) 9%, transparent) 1px, transparent 1px) 0 0 / 18px 18px,
+  var(--surface); }

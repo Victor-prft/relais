@@ -11,9 +11,10 @@ const incidentList = {
     LEFT JOIN users a ON a.id = t.assigned_to_id
     LEFT JOIN support_groups g ON g.id = t.assignment_group_id
     LEFT JOIN categories c ON c.id = t.category_id
-    LEFT JOIN categories pc ON pc.id = c.parent_id`,
+    LEFT JOIN categories pc ON pc.id = c.parent_id
+    LEFT JOIN cis ci ON ci.id = t.ci_id`,
   where: "t.type = 'incident'",
-  search: ['t.number', 't.title', 't.description', 'r.full_name'],
+  search: ['t.number', 't.title', 't.description', 'r.full_name', 'ci.name'],
   defaultSort: { key: 'opened_at', dir: 'desc' },
   extraSelect: ['t.id AS id', 't.version AS version'],
   columns: {
@@ -32,6 +33,8 @@ const incidentList = {
     category: { sql: "CASE WHEN pc.id IS NULL THEN c.name ELSE pc.name || ' › ' || c.name END", sortable: true },
     category_id: { sql: 't.category_id', filter: 'id' },
     category_root_id: { sql: 'COALESCE(c.parent_id, c.id)', filter: 'id' },
+    ci: { sql: 'ci.name', sortable: true },
+    ci_id: { sql: 't.ci_id', filter: 'id' },
     contact_type: { sql: 'i.contact_type', sortable: true, filter: 'enum' },
     on_hold_reason: { sql: 'i.on_hold_reason', filter: 'enum' },
     opened_at: { sql: 't.opened_at', sortable: true, filter: 'date' },

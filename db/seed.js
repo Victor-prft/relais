@@ -13,6 +13,7 @@ const { hashPasswordSync } = require('../auth/passwords');
 const { USERS, GROUPS, DEMO_PASSWORD } = require('./seed/people');
 const { createRandom } = require('./seed/random');
 const { seedIncidents } = require('./seed/incidents');
+const { seedCmdb } = require('./seed/cmdb');
 
 function seedPeople(db) {
   const hash = hashPasswordSync(DEMO_PASSWORD);
@@ -40,7 +41,10 @@ async function seed(db, { log = console, now = new Date() } = {}) {
   const refs = db.transaction(() => seedPeople(db))();
   log.log(`seed : ${USERS.length} utilisateurs, ${GROUPS.length} groupes`);
 
-  const steps = [['incidents', () => seedIncidents(db, refs, now, rnd)]];
+  const steps = [
+    ['cmdb', () => seedCmdb(db, refs, now)],
+    ['incidents', () => seedIncidents(db, refs, now, rnd)]
+  ];
   for (const [, run] of steps) {
     const summary = db.transaction(run)();
     if (summary) log.log(`seed : ${summary}`);

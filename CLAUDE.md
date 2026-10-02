@@ -65,6 +65,11 @@ les tickets dont il est demandeur ou bénéficiaire.
   `tickets/subscribers.js`, chargé par le service lui-même — actifs partout (API, jobs, seed, tests).
 - **Verrou optimiste** : `tickets.version` ; le front envoie `version` à chaque PATCH, 409 sinon.
 - **Visibilité** : `tickets/access.js`. Un `user` ne voit que ses tickets ; un ticket invisible → 404.
+- **Formulaires dynamiques** : `lib/form-schema.js` (validation serveur) ↔ `public/js/ui/form-renderer.js`
+  (rendu). Même format pour les attributs de classe de CI et le catalogue de services.
+- **Propagation d'impact CMDB** : portée par `ci_relation_types.impact` (`to_source` / `to_target`),
+  pas codée en dur ; `cmdb/graph.js` borne la récursion (`MAX_DEPTH`).
+- **Cytoscape** : identifiants de nœuds préfixés (`n12`) — `#12` n'est pas un sélecteur valide.
 - **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
   liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
@@ -131,7 +136,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 | 0 | Cadrage : CLAUDE.md, schéma, arborescence | — | fait |
 | 1 | Socle : structure, migrations, seed, auth, rôles, layout, PWA | v0.1.0 | fait |
 | 2 | Incidents : liste, formulaire, cycle de vie, audit trail | v0.2.0 | fait |
-| 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | à faire |
+| 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | fait |
 | 4 | SLA + job planifié + notifications | v0.4.0 | à faire |
 | 5 | Dashboard Gridstack + widgets | v0.5.0 | à faire |
 | 6 | Catalogue de services + approbations | v0.6.0 | à faire |
@@ -173,3 +178,18 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
   dont 3 incidents majeurs P1 avec doublons liés ; les tickets récents restent en file.
 - Tests : priorité, transitions, cycle de vie complet via le service, API (visibilité, routage,
   version, injection dans les filtres et le tri, @me/@mygroups, journal, liens, vues).
+
+### Phase 3 — CMDB (03/10/2026)
+- Migration `003` : ci_classes (6 classes, schéma d'attributs JSON), cis, ci_relation_types
+  (dépend de / héberge / est connecté à, avec sens de propagation), ci_relations, `tickets.ci_id`
+  (ALTER : une FK vers une table absente bloque toute écriture), ticket_cis.
+- `cmdb/service.js` : CRUD avec audit (entité `ci`), attributs validés contre la classe, relations
+  (ni soi-même, ni doublon, ni hébergement réciproque). `cmdb/graph.js` : voisinage borné et analyse
+  d'impact par CTE récursive.
+- API `/api/cis` (agent+) : liste, fiche + relations, graphe, impact, tickets liés, historique.
+- Front : liste CMDB (vues par classe, « avec incidents ouverts »), fiche CI (attributs dynamiques,
+  graphe concentrique cytoscape, relations, incidents, changements, historique, analyse d'impact),
+  CI sur la fiche incident, « Déclarer un incident » depuis un CI, CI dans la recherche globale.
+- Seed : 30 CI, 37 relations ; les incidents pointent vers des CI plausibles.
+- Tests : formulaires dynamiques, règles de relation, propagation d'impact (dépendance, hébergement,
+  réseau, boucle), voisinage, audit CI, API (accès, liste, graphe, incidents liés, CI inexistant → 400).
