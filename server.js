@@ -59,13 +59,15 @@ function errorHandler(err, req, res, _next) {
  * Construit l'application sans écouter de port : les tests l'utilisent
  * avec une base en mémoire.
  */
-function createApp({ db, appConfig = config }) {
+function createApp({ db, appConfig = config, ai = null }) {
   const app = express();
   app.disable('x-powered-by');
   if (appConfig.isProd) app.set('trust proxy', 1);
 
   const sessionStore = new SqliteSessionStore(db);
-  const deps = { db, config: appConfig, sessionStore, version };
+  // Client IA : injectable (tests) ; sans clé, il répond « indisponible ».
+  const aiClient = ai || require('./ai/client').createAiClient({ apiKey: appConfig.anthropicApiKey, model: appConfig.anthropicModel });
+  const deps = { db, config: appConfig, sessionStore, version, ai: aiClient };
 
   app.use(securityHeaders);
   app.use(express.json({ limit: '200kb' }));

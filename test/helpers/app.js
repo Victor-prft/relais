@@ -34,7 +34,7 @@ function addGroup(db, name, memberIds = [], managerId = null) {
   return id;
 }
 
-async function startTestApp(db = createTestDb()) {
+async function startTestApp(db = createTestDb(), { ai = null } = {}) {
   const appConfig = {
     env: 'test',
     isProd: false,
@@ -44,7 +44,7 @@ async function startTestApp(db = createTestDb()) {
     anthropicApiKey: null,
     anthropicModel: 'test-model'
   };
-  const app = createApp({ db, appConfig });
+  const app = createApp({ db, appConfig, ai });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });

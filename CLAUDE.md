@@ -94,6 +94,14 @@ les tickets dont il est demandeur ou bénéficiaire.
 - **Changements** : contenu (plans, risque, type) figé dès la soumission — on repasse en brouillon
   pour le modifier ; fenêtre et CI modifiables jusqu'à la mise en œuvre. La soumission passe par
   `POST /api/changes/:id/submit` (choix du CAB), jamais par un PATCH d'état.
+- **IA** (`ai/client.js`) : modèle `claude-opus-5-5` (configurable), effort `low`, sortie JSON par
+  `output_config.format` (pas de `tool_choice` forcé : refusé par Opus 5.5), repli serveur
+  `fallbacks: "default"` (bêta `server-side-fallback-2026-07-01`), réponse revalidée par zod, ids
+  filtrés contre les listes fournies, saisie utilisateur balisée `<saisie>` comme donnée. Tout échec
+  → `available: false`, jamais une erreur HTTP. Chaque appel journalisé dans `ai_requests` (sans contenu).
+  Tests : client injecté avec un faux transport (`createApp({ ai })`).
+- **FTS5** : jamais la saisie brute dans MATCH (`kb/search.js` cite chaque mot) ; l'index suit
+  `kb_articles` par triggers (colonnes `title` / `body` de même nom).
 - **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
   liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
@@ -165,7 +173,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 | 5 | Dashboard Gridstack + widgets | v0.5.0 | fait |
 | 6 | Catalogue de services + approbations | v0.6.0 | fait |
 | 7 | Changements + calendrier | v0.7.0 | fait |
-| 8 | Base de connaissances + IA | v0.8.0 | à faire |
+| 8 | Base de connaissances + IA | v0.8.0 | fait |
 | 9 | Prod Railway (volume, env, healthcheck) | v1.0.0 | à faire |
 
 ### Phase 0 — cadrage (02/10/2026)
@@ -289,3 +297,23 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
   « causé par »), deux interventions en conflit sur SRV-DB-01, un CAB en cours, un rejet.
 - Tests : workflow normal / urgent / standard, contenu figé, fenêtre et code de clôture exigés,
   CAB réservé aux managers, conflits directs / indirects / bout à bout, API calendrier.
+
+### Phase 8 — base de connaissances et IA (03/10/2026)
+- Migration `008` : kb_articles + index FTS5 (contenu externe, sans accents, triggers), ai_requests,
+  ai_summaries (cache par empreinte du fil).
+- Base de connaissances : recherche bm25 (titre ×5) avec extraits surlignés, brouillon / publié /
+  retiré, audit, compteur de lectures, brouillon prérempli depuis un incident résolu (« Créer un
+  article » sur la fiche). Rendu Markdown via marked + DOMPurify (seul innerHTML de l'app).
+- IA : déclaration d'incident en texte libre → formulaire prérempli à confirmer (portail) ;
+  suggestions d'articles pendant la saisie (FTS puis tri par le modèle, repli sur la recherche) ;
+  résumé à la demande d'un fil long (console, en cache tant que le fil ne bouge pas). Plafonds par
+  compte. Sans `ANTHROPIC_API_KEY`, tout se replie proprement.
+- Seed : 7 articles publiés. Tests : FTS (accents, préfixes, injection, réindexation), visibilité,
+  brouillon depuis incident, IA (paramètres envoyés, ids inventés écartés, schéma invalide, refus,
+  panne, désactivée, suggestions, cache des résumés).
+
+### Reste à faire
+- Phase 9 (préparation prod Railway → v1.0.0) **non commencée**, à la demande : volume `/data`
+  (contrôle déjà présent : `db/storage.js`), variables d'env (`.env.example` à jour), healthcheck
+  `/api/health` et `railway.json` déjà en place ; restent DEPLOIEMENT.md, `SEED_ON_EMPTY` à valider
+  en conditions réelles, version du service worker à aligner, README portfolio.

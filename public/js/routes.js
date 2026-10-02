@@ -16,6 +16,7 @@ import { requestListView, requestFormView, taskListView, taskFormView } from './
 import { approvalsView } from './views/approvals.js';
 import { changeListView, changeCalendarView } from './views/changes/index.js';
 import { changeFormView } from './views/changes/form.js';
+import { kbListView, portalKbView, kbArticleView, kbEditorView } from './views/kb/index.js';
 import { portalCatalogView, portalCatalogItemView } from './views/portal/catalog.js';
 
 /**
@@ -42,7 +43,10 @@ export const CONSOLE_NAV = [
   },
   {
     title: 'Configuration',
-    items: [{ path: '/cmdb', label: 'CMDB', icon: 'server' }]
+    items: [
+      { path: '/cmdb', label: 'CMDB', icon: 'server' },
+      { path: '/kb', label: 'Base de connaissances', icon: 'book' }
+    ]
   },
   {
     title: 'Administration',
@@ -60,6 +64,7 @@ export const PORTAL_NAV = [
   { path: '/portal', label: 'Accueil', icon: 'home' },
   { path: '/portal/incident/new', label: 'Signaler un problème', icon: 'alert' },
   { path: '/portal/catalog', label: 'Catalogue', icon: 'package' },
+  { path: '/portal/kb', label: 'Aide', icon: 'book' },
   { path: '/portal/tickets', label: 'Mes tickets', icon: 'inbox' }
 ];
 
@@ -80,6 +85,13 @@ export function registerRoutes() {
   route('/changes', changeListView, { title: 'Changements', role: 'agent' });
   route('/changes/calendar', changeCalendarView, { title: 'Calendrier des changements', role: 'agent' });
   route('/changes/:id', changeFormView, { title: 'Changement', role: 'agent' });
+
+  route('/kb', kbListView, { title: 'Base de connaissances', role: 'agent' });
+  route('/kb/new', kbEditorView, { title: 'Nouvel article', role: 'agent' });
+  route('/kb/:id/edit', kbEditorView, { title: 'Article', role: 'agent' });
+  route('/kb/:id', kbArticleView, { title: 'Article', role: 'agent' });
+  route('/portal/kb', portalKbView, { title: 'Aide', space: 'portal' });
+  route('/portal/kb/:id', (el, p, q) => kbArticleView(el, p, q, { portal: true }), { title: 'Aide', space: 'portal' });
 
   route('/cmdb', cmdbListView, { title: 'CMDB', role: 'agent' });
   route('/cmdb/:id', ciFormView, { title: 'Élément de configuration', role: 'agent' });

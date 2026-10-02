@@ -13,6 +13,7 @@ import { getGroups, getCategories, categoryOptions, cached } from '../../state.j
 import { setTitle } from '../../app.js';
 import { incidentExtras } from './extras.js';
 import { slaPanel } from '../../ui/sla.js';
+import { aiSummaryCard } from '../../ui/ai-summary.js';
 
 const getMeta = () => cached('incident-meta', () => api.get('/api/incidents/meta'));
 const levelOptions = [1, 2, 3].map((v) => ({ value: v, label: LEVEL_LABELS[v] }));
@@ -218,6 +219,7 @@ function render(el, { meta, groups, categories, ticket, prefill = {} }) {
   const aside = isNew
     ? h('aside', { class: 'record-aside' }, sideCard('Priorité ITIL', h('p', { class: 'small muted' }, 'La priorité découle de l’impact (combien de personnes ?) et de l’urgence (à quel point est-ce bloquant ?).'), matrix()))
     : h('aside', { class: 'record-aside' },
+        aiSummaryCard(t.id, Infinity),
         sideCard('Demandeur', keyValues([['Nom', t.requester_name], ['Email', t.requester_email], ['Service', t.requester_department]])),
         sideCard('Dates', keyValues([
           ['Ouvert', formatDateTime(t.opened_at)],

@@ -36,7 +36,7 @@ const config = {
   adminEmail: process.env.ADMIN_EMAIL || null,
   adminPassword: process.env.ADMIN_PASSWORD || null,
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
-  anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5',
+  anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-opus-5-5',
   cronEnabled: bool(process.env.CRON_ENABLED, !isTest),
   emailEnabled: bool(process.env.EMAIL_ENABLED, false)
 };

@@ -9,7 +9,7 @@
  *
  * Changer VERSION à chaque livraison qui modifie le shell.
  */
-const VERSION = 'relais-v1.0.0';
+const VERSION = 'relais-v0.8.0';
 const SHELL = [
   '/css/tokens.css',
   '/css/base.css',

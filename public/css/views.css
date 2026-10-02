@@ -105,3 +105,20 @@
   .cal-chip { font-size: 10px; padding: 1px 3px; }
   .cal-chip .time { display: none; }
 }
+
+/* ---------- Base de connaissances ---------- */
+.kb-card { display: flex; flex-direction: column; gap: 4px; color: var(--text); }
+.kb-card:hover { border-color: var(--accent); text-decoration: none; }
+.kb-excerpt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kb-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.kb-editor { min-height: 480px; font-size: 13px; line-height: 1.55; }
+.kb-preview { min-height: 480px; overflow: auto; }
+@media (max-width: 900px) { .kb-split { grid-template-columns: minmax(0, 1fr); } .kb-editor, .kb-preview { min-height: 280px; } }
+
+/* ---------- Assistant IA ---------- */
+.ai-panel { margin-bottom: 16px; }
+.ai-panel textarea { min-height: 110px; }
+.ai-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--accent); }
+.ai-summary ul { margin: 4px 0 0; padding-left: 18px; }
+.kb-suggestions { border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: var(--radius-m); padding: 10px 12px; }
+.kb-suggestions a { display: block; padding: 4px 0; }

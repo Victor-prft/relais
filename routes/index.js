@@ -28,6 +28,8 @@ module.exports = function apiRoutes(deps) {
   router.use('/requests', requests);
   router.use('/tasks', tasks);
   router.use('/changes', require('./changes')(deps));
+  router.use('/kb', require('./kb')(deps));
+  router.use('/ai', require('./ai')(deps));
   router.use('/admin/sla', require('./admin-sla')(deps));
   router.use('/', require('./reference')(deps));
 
