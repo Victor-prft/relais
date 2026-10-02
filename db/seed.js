@@ -11,6 +11,8 @@
 const fs = require('fs');
 const { hashPasswordSync } = require('../auth/passwords');
 const { USERS, GROUPS, DEMO_PASSWORD } = require('./seed/people');
+const { createRandom } = require('./seed/random');
+const { seedIncidents } = require('./seed/incidents');
 
 function seedPeople(db) {
   const hash = hashPasswordSync(DEMO_PASSWORD);
@@ -33,20 +35,20 @@ function seedPeople(db) {
   return { users: ids, groups };
 }
 
-/** Étapes du seed, complétées phase après phase. */
-const STEPS = [];
-
 async function seed(db, { log = console, now = new Date() } = {}) {
+  const rnd = createRandom();
   const refs = db.transaction(() => seedPeople(db))();
   log.log(`seed : ${USERS.length} utilisateurs, ${GROUPS.length} groupes`);
-  for (const step of STEPS) {
-    const summary = step(db, refs, now);
+
+  const steps = [['incidents', () => seedIncidents(db, refs, now, rnd)]];
+  for (const [, run] of steps) {
+    const summary = db.transaction(run)();
     if (summary) log.log(`seed : ${summary}`);
   }
   return refs;
 }
 
-module.exports = { seed, STEPS };
+module.exports = { seed };
 
 if (require.main === module) {
   const { config } = require('../config');

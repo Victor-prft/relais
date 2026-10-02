@@ -15,6 +15,10 @@ module.exports = function apiRoutes(deps) {
 
   router.use('/auth', require('./auth')(deps));
   router.use('/admin', require('./admin')(deps));
+  router.use('/incidents', require('./incidents')(deps));
+  router.use('/tickets', require('./tickets')(deps));
+  router.use('/lists', require('./lists')(deps));
+  router.use('/portal', require('./portal')(deps));
   router.use('/', require('./reference')(deps));
 
   router.use((_req, _res, next) => next(notFound('Route API inconnue')));

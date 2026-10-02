@@ -55,9 +55,18 @@ les tickets dont il est demandeur ou bénéficiaire.
 - **CSRF** : toute requête API qui modifie exige `X-Requested-With: relais` (posé par `public/js/api.js`).
 - **Contexte de requête** : les services reçoivent `ctx = { db, user, now }` (`req.ctx`). `user: null` = système (jobs, seed).
 - **DOM** : jamais d'`innerHTML` avec une donnée ; `h()` de `public/js/ui/dom.js`. Seul le Markdown passe par DOMPurify.
-- **Audit trail** : toute modification d'un champ suivi d'un ticket passe par le service
-  du domaine, qui écrit l'historique dans la même transaction. Pas d'`UPDATE tickets`
-  ailleurs.
+- **Audit trail** : toute modification d'un ticket passe par `tickets/service.js`
+  (`createTicket` / `updateTicket`), qui vérifie le workflow, recalcule la priorité, écrit
+  l'audit (libellés figés dans `*_display`) et émet les événements (`tickets/hooks.js`) dans
+  la même transaction. Pas d'`UPDATE tickets` ailleurs (seule exception : `updated_at` au journal).
+- **Nouveau type de ticket** = une définition (`extTable`, `extFields`, `workflow`, `tracked`,
+  `prepareCreate`, `beforeUpdate`, `decorate`) enregistrée dans `tickets/types.js`.
+- **Abonnés aux événements** (SLA, notifications, relance auto) : déclarés dans
+  `tickets/subscribers.js`, chargé par le service lui-même — actifs partout (API, jobs, seed, tests).
+- **Verrou optimiste** : `tickets.version` ; le front envoie `version` à chaque PATCH, 409 sinon.
+- **Visibilité** : `tickets/access.js`. Un `user` ne voit que ses tickets ; un ticket invisible → 404.
+- **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
+  liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
 ## Conventions
 
@@ -121,7 +130,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 |-------|---------|---------|------|
 | 0 | Cadrage : CLAUDE.md, schéma, arborescence | — | fait |
 | 1 | Socle : structure, migrations, seed, auth, rôles, layout, PWA | v0.1.0 | fait |
-| 2 | Incidents : liste, formulaire, cycle de vie, audit trail | v0.2.0 | à faire |
+| 2 | Incidents : liste, formulaire, cycle de vie, audit trail | v0.2.0 | fait |
 | 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | à faire |
 | 4 | SLA + job planifié + notifications | v0.4.0 | à faire |
 | 5 | Dashboard Gridstack + widgets | v0.5.0 | à faire |
@@ -143,3 +152,24 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 - Front : coquille console (barre latérale) et portail (navigation haute), routeur par hash, thème
   clair/sombre, page de connexion avec comptes de démo, PWA (manifest, sw.js, icônes générées).
 - Tests : `test/auth.test.js` (401, énumération, CSRF, rôles, dernier admin, sessions coupées, healthcheck).
+
+### Phase 2 — incidents (03/10/2026)
+- Migration `002` : tickets (table commune), incidents, journal_entries, audit_entries,
+  ticket_relations, list_preferences, saved_filters + 16 catégories d'incident.
+- Priorité ITIL `incidents/priority.js` (matrice explicite), workflow déclaratif `lib/workflow.js`
+  + `incidents/workflow.js` (transitions support / demandeur, frise, alias En attente → En cours).
+- Règles : agent assigné = support actif membre du groupe (groupe déduit sinon), Nouveau + agent
+  → Assigné, attente avec motif, résolution avec code + notes, réouverture comptée, première prise
+  en charge datée, ticket clos/annulé figé. Réponse du demandeur à un « En attente du demandeur »
+  → En cours (`incidents/hooks.js`). Clôture auto après `incident.auto_close_days` (job horaire).
+- API : `/api/incidents` (liste, création routée par catégorie, PATCH versionné),
+  `/api/tickets/:id` (+ activity, journal, relations), `/api/tickets/by-number`, `/api/tickets/search`,
+  `/api/lists/:key` (colonnes, vues enregistrées), `/api/portal/tickets`.
+- Front : vue liste réutilisable (`ui/list-view.js` : vues prédéfinies + enregistrées, filtres
+  combinables, colonnes, tri, pagination, état gardé en sessionStorage), fiche à onglets
+  (`ui/record.js`, `ui/activity.js`, `ui/relations.js`), console incidents, portail (déclaration
+  sans jargon ITIL, mes tickets, fiche avec confirmer / rouvrir / répondre), `#/go/NUMÉRO`, recherche.
+- Seed : 150 incidents joués étape par étape sur 60 jours (heures ouvrées de Paris, `lib/tz.js`),
+  dont 3 incidents majeurs P1 avec doublons liés ; les tickets récents restent en file.
+- Tests : priorité, transitions, cycle de vie complet via le service, API (visibilité, routage,
+  version, injection dans les filtres et le tri, @me/@mygroups, journal, liens, vues).

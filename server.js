@@ -45,6 +45,9 @@ function errorHandler(err, req, res, _next) {
   if (err.type === 'entity.too.large') {
     return res.status(413).json({ error: { code: 'too_large', message: 'Requête trop volumineuse' } });
   }
+  if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+    return res.status(400).json({ error: { code: 'bad_reference', message: 'Référence invalide (élément inexistant)' } });
+  }
   if (err instanceof HttpError) {
     return res.status(err.status).json({ error: { code: err.code, message: err.message, details: err.details } });
   }

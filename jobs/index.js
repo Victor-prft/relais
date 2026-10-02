@@ -6,7 +6,9 @@ const cron = require('node-cron');
  * Tâches planifiées. Chaque tâche est une fonction (db, now) testable seule ;
  * ce fichier ne fait que les brancher sur node-cron.
  */
-const JOBS = [];
+const JOBS = [
+  { name: 'clôture auto des incidents', schedule: '17 * * * *', run: require('../incidents/auto-close').autoCloseResolved }
+];
 
 function startJobs(db, log = console) {
   const tasks = JOBS.map(({ name, schedule, run }) =>
