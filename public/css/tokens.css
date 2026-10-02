@@ -57,6 +57,11 @@
   --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
   --shadow-2: 0 8px 24px rgba(16, 24, 40, 0.14);
   --focus: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Graphiques : séries catégorielles validées (daltonisme, contraste) sur chaque surface. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #e8ebef;
   color-scheme: light;
 }
 
@@ -88,6 +93,9 @@
     --info: #6aa3ec;
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --chart-grid: #262c36;
     color-scheme: dark;
   }
 }
@@ -119,5 +127,8 @@
   --info: #6aa3ec;
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --chart-grid: #262c36;
   color-scheme: dark;
 }

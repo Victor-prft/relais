@@ -68,8 +68,8 @@
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
-.topbar .title { font-weight: 650; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar .search { margin-left: auto; width: min(320px, 40vw); }
+.topbar .title { flex: 1 1 auto; min-width: 0; font-weight: 650; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar .search { width: min(320px, 40vw); }
 .btn.menu-toggle { display: none; }
 
 .content { padding: var(--space-5); max-width: 1500px; width: 100%; }

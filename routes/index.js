@@ -21,6 +21,7 @@ module.exports = function apiRoutes(deps) {
   router.use('/portal', require('./portal')(deps));
   router.use('/cis', require('./cmdb')(deps));
   router.use('/notifications', require('./notifications')(deps));
+  router.use('/dashboard', require('./dashboard')(deps));
   router.use('/admin/sla', require('./admin-sla')(deps));
   router.use('/', require('./reference')(deps));
 

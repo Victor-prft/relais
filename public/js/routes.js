@@ -1,5 +1,5 @@
 import { route } from './router.js';
-import { homeView } from './views/home.js';
+import { dashboardView } from './views/dashboard/index.js';
 import { portalHomeView } from './views/portal/home.js';
 import { portalTicketsView } from './views/portal/tickets.js';
 import { portalTicketView } from './views/portal/ticket.js';
@@ -44,7 +44,7 @@ export const PORTAL_NAV = [
 ];
 
 export function registerRoutes() {
-  route('/', homeView, { title: 'Tableau de bord', role: 'agent' });
+  route('/', dashboardView, { title: 'Tableau de bord', role: 'agent' });
   route('/go/:number', goView, { title: 'Recherche' });
   route('/search', searchView, { title: 'Recherche', role: 'agent' });
 

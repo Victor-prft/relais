@@ -77,6 +77,12 @@ les tickets dont il est demandeur ou bénéficiaire.
   Modifier une définition ne touche pas les SLA en cours.
 - **Notifications** : jamais à l'auteur de l'action, jamais une note interne au demandeur
   (`notifications/subscribers.js`). Canal email = interface prête, aucun envoi (`EMAIL_ENABLED`).
+- **Graphiques** : couleurs = jetons `--series-1/2` (validés daltonisme + contraste sur nos deux
+  surfaces avec le validateur du skill dataviz), une seule échelle de valeurs, barres ≤ 24 px,
+  info-bulle + vue tableau sur chaque graphique. Ne pas ajouter de série sans revalider la palette.
+- **Dashboard** : un widget = une entrée de `dashboard/widgets.js` (rôle, taille, requête) + un rendu
+  dans `public/js/views/dashboard/renderers.js`. Gridstack omet x/y/w/h par défaut au `save()` :
+  toujours normaliser. Sous 900 px : pile simple, pas d'enregistrement de disposition.
 - **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
   liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
@@ -145,7 +151,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 | 2 | Incidents : liste, formulaire, cycle de vie, audit trail | v0.2.0 | fait |
 | 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | fait |
 | 4 | SLA + job planifié + notifications | v0.4.0 | fait |
-| 5 | Dashboard Gridstack + widgets | v0.5.0 | à faire |
+| 5 | Dashboard Gridstack + widgets | v0.5.0 | fait |
 | 6 | Catalogue de services + approbations | v0.6.0 | à faire |
 | 7 | Changements + calendrier | v0.7.0 | à faire |
 | 8 | Base de connaissances + IA | v0.8.0 | à faire |
@@ -222,3 +228,15 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 - Tests : temps ouvré (week-end, férié, heure d'été/hiver, plages coupées, aller-retour sur 200
   tirages), moteur SLA (pause, reprise, arrêt, réouverture, priorité, P1 24/7, annulation), job
   (alerte unique), routage des notifications, API.
+
+### Phase 5 — tableau de bord (03/10/2026)
+- Migration `005` : dashboard_layouts (disposition par utilisateur, grille 12 colonnes).
+- 9 widgets côté serveur (`dashboard/widgets.js`) : indicateurs clés (ouverts, P1/P2, non assignés,
+  résolus du jour, respect SLA 30 j, MTTR), mes tickets par priorité, file de mes groupes (non assignés
+  d'abord), SLA à risque ou dépassés (tout pour un manager, ses groupes pour un agent), incidents par
+  jour (ouverts / résolus, 30 j, jours de Paris), par catégorie, MTTR par groupe, changements à venir,
+  approbations en attente (ces deux derniers s'allument avec les phases 6 et 7).
+- Disposition par défaut selon le rôle ; PUT validé (widget inconnu, doublon, hors grille refusés).
+- Front : Gridstack (mode « Personnaliser » : déplacer, redimensionner, ajouter, retirer, revenir au
+  défaut ; sauvegarde automatique), Chart.js (courbe monotone, barres horizontales, étiquettes directes,
+  bascule tableau), redessin au changement de thème, rafraîchissement toutes les 2 min, pile sur mobile.
