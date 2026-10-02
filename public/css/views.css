@@ -75,3 +75,33 @@
 .dash-stack { display: flex; flex-direction: column; gap: 12px; }
 .dash-stack .widget { height: auto; }
 .dash-stack .widget.chart .widget-body { height: 300px; }
+
+/* ---------- Calendrier des changements ---------- */
+.calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); overflow: hidden; }
+.cal-head { padding: 8px; font-size: 12px; font-weight: 650; color: var(--text-muted); background: var(--surface-2); border-bottom: 1px solid var(--border); text-transform: capitalize; }
+.cal-day { min-height: 112px; padding: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cal-day:nth-child(7n) { border-right: 0; }
+.cal-day.other { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+.cal-day.other .cal-date { color: var(--text-faint); }
+.cal-day.today .cal-date { background: var(--accent); color: var(--accent-text); border-radius: 99px; padding: 0 7px; align-self: flex-start; }
+.cal-date { font-size: 12px; font-weight: 650; }
+.cal-chip {
+  display: block; width: 100%; text-align: left; border: 0; border-left: 3px solid var(--c); border-radius: 4px;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: var(--text); font: inherit; font-size: 11.5px;
+  padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+.cal-chip .time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-chip.state-draft { opacity: 0.6; border-left-style: dashed; }
+.cal-chip.state-closed { opacity: 0.55; }
+.cal-chip.conflict { box-shadow: inset 0 0 0 1px var(--danger); }
+.risk-low { --c: var(--ok); }
+.risk-moderate { --c: var(--warn); }
+.risk-high { --c: var(--danger); }
+.cal-legend { display: inline-flex; align-items: center; gap: 5px; }
+.cal-legend::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--c, transparent); }
+.cal-legend.conflict::before { box-shadow: inset 0 0 0 1.5px var(--danger); }
+@media (max-width: 760px) {
+  .cal-day { min-height: 70px; padding: 3px; }
+  .cal-chip { font-size: 10px; padding: 1px 3px; }
+  .cal-chip .time { display: none; }
+}

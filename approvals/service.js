@@ -82,7 +82,7 @@ function decide(ctx, approvalId, decision, comment = null) {
     });
 
     const approvals = listForTicket(db, ticket.id).filter((a) => a.state !== 'canceled');
-    const outcome = RULES[ticket.type]?.(approvals) ?? null;
+    const outcome = RULES[ticket.type]?.(approvals, ticket) ?? null;
     if (outcome) {
       cancelPending(ctx, ticket.id);
       conclusionHandlers[ticket.type]?.(ctx, ticket, outcome);

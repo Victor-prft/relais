@@ -9,3 +9,4 @@ require('../incidents/hooks');
 require('../sla/subscribers');
 require('../notifications/subscribers');
 require('../requests/hooks');
+require('../changes/hooks');

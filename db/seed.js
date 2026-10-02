@@ -15,6 +15,7 @@ const { createRandom } = require('./seed/random');
 const { seedIncidents } = require('./seed/incidents');
 const { seedCmdb } = require('./seed/cmdb');
 const { seedCatalog } = require('./seed/catalog');
+const { seedChanges } = require('./seed/changes');
 
 function seedPeople(db) {
   const hash = hashPasswordSync(DEMO_PASSWORD);
@@ -61,6 +62,7 @@ async function seed(db, { log = console, now = new Date() } = {}) {
     ['cmdb', () => seedCmdb(db, refs, now)],
     ['incidents', () => seedIncidents(db, refs, now, rnd)],
     ['catalogue', () => seedCatalog(db, refs, now)],
+    ['changements', () => seedChanges(db, refs, now)],
     ['finalisation', () => finalize(db, now)]
   ];
   for (const [, run] of steps) {

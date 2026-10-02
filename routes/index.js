@@ -27,6 +27,7 @@ module.exports = function apiRoutes(deps) {
   const { requests, tasks } = require('./requests')(deps);
   router.use('/requests', requests);
   router.use('/tasks', tasks);
+  router.use('/changes', require('./changes')(deps));
   router.use('/admin/sla', require('./admin-sla')(deps));
   router.use('/', require('./reference')(deps));
 

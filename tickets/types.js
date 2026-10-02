@@ -7,7 +7,8 @@
 const TYPES = {
   incident: require('../incidents/definition'),
   request: require('../requests/definition').request,
-  request_task: require('../requests/definition').task
+  request_task: require('../requests/definition').task,
+  change: require('../changes/definition')
 };
 
 function getType(type) {

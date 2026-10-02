@@ -28,6 +28,8 @@ function displayValue(db, kind, value, labels = null) {
       return `${value} — ${LEVELS[value] || ''}`;
     case 'enum':
       return labels?.[value] ?? String(value);
+    case 'date':
+      return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' }).format(new Date(value));
     case 'text': {
       const s = String(value);
       return s.length > 140 ? `${s.slice(0, 140)}…` : s;

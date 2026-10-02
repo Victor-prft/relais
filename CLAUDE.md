@@ -91,6 +91,9 @@ les tickets dont il est demandeur ou bénéficiaire.
   les règles du type.
 - **Approbations** (`approvals/service.js`) : la règle qui conclut est par type (`setRule`), la suite
   aussi (`onConcluded`) — pas d'import croisé entre approbations, demandes et changements.
+- **Changements** : contenu (plans, risque, type) figé dès la soumission — on repasse en brouillon
+  pour le modifier ; fenêtre et CI modifiables jusqu'à la mise en œuvre. La soumission passe par
+  `POST /api/changes/:id/submit` (choix du CAB), jamais par un PATCH d'état.
 - **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
   liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
@@ -161,7 +164,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 | 4 | SLA + job planifié + notifications | v0.4.0 | fait |
 | 5 | Dashboard Gridstack + widgets | v0.5.0 | fait |
 | 6 | Catalogue de services + approbations | v0.6.0 | fait |
-| 7 | Changements + calendrier | v0.7.0 | à faire |
+| 7 | Changements + calendrier | v0.7.0 | fait |
 | 8 | Base de connaissances + IA | v0.8.0 | à faire |
 | 9 | Prod Railway (volume, env, healthcheck) | v1.0.0 | à faire |
 
@@ -266,3 +269,23 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 - Tests : validation du formulaire, demande sans / avec approbation, contournement impossible,
   séquences de tâches, rejet, annulation, commande pour autrui, API (visibilité de l'approbateur),
   administration du catalogue, non-régression de l'auto-assignation hors groupe.
+
+### Phase 7 — changements (03/10/2026)
+- Migration `007` : standard_changes (modèles pré-autorisés), changes (type, risque, plans, fenêtre
+  prévue / réelle, code de clôture).
+- Workflow Brouillon → Évaluation CAB → Autorisé → Planifié → Mise en œuvre → Revue → Clos (Rejeté,
+  Annulé) ; standard : brouillon → planifié sans CAB. Règle du CAB : normal = tous, un refus rejette ;
+  urgent = premier avis. Réouverture d'un rejeté en brouillon.
+- Conflits (`changes/conflicts.js`) : même CI + fenêtres qui se chevauchent (conflit), ou CI liés
+  par l'analyse d'impact CMDB (dépendance). Risque conseillé d'après la criticité des CI et le
+  nombre d'éléments dépendants.
+- API `/api/changes` : liste, méta (types, risques, modèles, membres possibles du CAB), calendrier
+  avec conflits, vérification à la volée, fiche, création (normal / urgent / depuis un modèle), CI,
+  soumission au CAB. Widget « Changements à venir » et approbations CAB dans « Approbations ».
+- Front : liste (vues CAB, à venir), fiche (plans, CI en puces, conflits et risque recalculés pendant
+  la saisie, soumission au CAB, planifier, démarrer, terminer, clore avec bilan), calendrier mensuel
+  (couleur = risque, liseré = conflit, détail au clic, brouillons en option).
+- Seed : 3 modèles, 11 changements dont un retour arrière qui a causé l'incident majeur ERP (lien
+  « causé par »), deux interventions en conflit sur SRV-DB-01, un CAB en cours, un rejet.
+- Tests : workflow normal / urgent / standard, contenu figé, fenêtre et code de clôture exigés,
+  CAB réservé aux managers, conflits directs / indirects / bout à bout, API calendrier.

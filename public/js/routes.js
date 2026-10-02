@@ -14,6 +14,8 @@ import { adminSlaView } from './views/admin/sla.js';
 import { adminCatalogView, adminCatalogItemView } from './views/admin/catalog.js';
 import { requestListView, requestFormView, taskListView, taskFormView } from './views/requests/index.js';
 import { approvalsView } from './views/approvals.js';
+import { changeListView, changeCalendarView } from './views/changes/index.js';
+import { changeFormView } from './views/changes/form.js';
 import { portalCatalogView, portalCatalogItemView } from './views/portal/catalog.js';
 
 /**
@@ -29,6 +31,13 @@ export const CONSOLE_NAV = [
       { path: '/requests', label: 'Demandes', icon: 'inbox' },
       { path: '/tasks', label: 'Tâches', icon: 'task' },
       { path: '/approvals', label: 'Approbations', icon: 'approve', role: 'manager' }
+    ]
+  },
+  {
+    title: 'Changements',
+    items: [
+      { path: '/changes', label: 'Changements', icon: 'change' },
+      { path: '/changes/calendar', label: 'Calendrier', icon: 'calendar' }
     ]
   },
   {
@@ -67,6 +76,10 @@ export function registerRoutes() {
   route('/tasks', taskListView, { title: 'Tâches', role: 'agent' });
   route('/tasks/:id', taskFormView, { title: 'Tâche', role: 'agent' });
   route('/approvals', approvalsView, { title: 'Approbations', role: 'agent' });
+
+  route('/changes', changeListView, { title: 'Changements', role: 'agent' });
+  route('/changes/calendar', changeCalendarView, { title: 'Calendrier des changements', role: 'agent' });
+  route('/changes/:id', changeFormView, { title: 'Changement', role: 'agent' });
 
   route('/cmdb', cmdbListView, { title: 'CMDB', role: 'agent' });
   route('/cmdb/:id', ciFormView, { title: 'Élément de configuration', role: 'agent' });
