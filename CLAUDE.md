@@ -1,0 +1,145 @@
+# Relais
+
+Plateforme ITSM (gestion des services IT) inspirée du module ITSM de ServiceNow :
+incidents, demandes de service, changements, CMDB, SLA, base de connaissances.
+On reprend les **concepts métier ITIL**, pas l'identité visuelle : l'interface est originale.
+Projet solo, deux buts : portfolio et apprentissage d'ITIL. Petite échelle (dizaines
+d'utilisateurs) : on privilégie la simplicité et la lisibilité, pas la scalabilité.
+
+## Stack
+
+- Back : Node.js 22 + Express 5, API REST JSON sous `/api/*` (Node 20 n'est plus maintenu depuis le 30/04/2026)
+- Base : SQLite via `better-sqlite3` (API **synchrone**, requêtes préparées uniquement)
+  - chemin : `DATABASE_PATH` (défaut `./db/relais.db`, prod `/data/relais.db` sur le volume Railway)
+  - migrations versionnées `db/migrations/NNN_description.sql` + `db/seed.js`
+- Auth : comptes locaux email + mot de passe (`bcryptjs`, JS pur : pas de compilation native),
+  `express-session` avec un store SQLite maison (`auth/session-store.js`, table `sessions`)
+- Validation : `zod` (entrées d'API et JSON renvoyé par le LLM)
+- `better-sqlite3` **12.x** : la 13.0.3 plante à l'ouverture (0xC0000005) sous Windows / Node 22.12
+- Front : HTML/CSS/JS vanilla (modules ES) dans `public/`, PWA (manifest + service worker), responsive
+- Dashboard : Gridstack.js ; graphiques : Chart.js ; graphe CMDB : cytoscape.js ; Markdown : marked + DOMPurify
+  — copiés de node_modules vers `public/vendor/` au postinstall (`tools/copy-vendor.js`), pas de CDN :
+  CSP `script-src 'self'` et shell PWA hors ligne
+- IA : API Anthropic, **côté serveur uniquement** (`ANTHROPIC_API_KEY`)
+- Tâches planifiées : `node-cron` (SLA, clôture auto)
+- Tests : `node --test` natif, fichiers `test/*.test.js`
+- Déploiement : Railway (`npm start`, `railway.json`, healthcheck `/api/health`)
+
+## Rôles
+
+| Rôle      | Accès |
+|-----------|-------|
+| `user`    | portail self-service : ses tickets, catalogue, base de connaissances publiée |
+| `agent`   | console : tickets de ses groupes, CMDB, rédaction d'articles |
+| `manager` | + approbations (demandes, CAB), statistiques, changements |
+| `admin`   | + configuration (catalogue, SLA, calendrier, groupes, utilisateurs) |
+
+Chaque route API déclare le rôle minimal exigé (`requireRole`). Un `user` ne voit que
+les tickets dont il est demandeur ou bénéficiaire.
+
+## Règles à ne jamais oublier
+
+- **SQL paramétré uniquement.** Les noms de colonnes de tri/filtre des listes passent
+  par une liste blanche, jamais par concaténation de saisie.
+- **Validation serveur sur toutes les routes** (corps, query, params). Le front ne protège rien.
+- **Secrets** : jamais en dur, toujours `.env` (non commité). `.env.example` à jour.
+- **Clé Anthropic** : jamais envoyée au navigateur. Toute réponse du LLM est validée par
+  un schéma ; si l'appel ou la validation échoue, l'utilisateur retombe sur le formulaire
+  manuel (jamais d'erreur bloquante).
+- **Migrations** : ne jamais modifier ni retirer une migration jouée — on la défait par
+  une migration de plus.
+- **Dates** : stockées en UTC ISO 8601 (`TEXT`). Les heures ouvrées se calculent dans le
+  fuseau du calendrier (Europe/Paris par défaut, changements d'heure compris).
+- **Horloge injectable** : la logique métier (priorité, transitions, SLA) reçoit `now`
+  en paramètre, pour être testable sans attendre.
+- **CSRF** : toute requête API qui modifie exige `X-Requested-With: relais` (posé par `public/js/api.js`).
+- **Contexte de requête** : les services reçoivent `ctx = { db, user, now }` (`req.ctx`). `user: null` = système (jobs, seed).
+- **DOM** : jamais d'`innerHTML` avec une donnée ; `h()` de `public/js/ui/dom.js`. Seul le Markdown passe par DOMPurify.
+- **Audit trail** : toute modification d'un champ suivi d'un ticket passe par le service
+  du domaine, qui écrit l'historique dans la même transaction. Pas d'`UPDATE tickets`
+  ailleurs.
+
+## Conventions
+
+- CommonJS, `'use strict'`, un dossier par domaine métier, routes fines dans `routes/`.
+- Code et identifiants en anglais ; textes d'interface, commentaires et commits en français.
+- Commits atomiques, état fonctionnel à chaque commit ; un tag par phase (`v0.x.0`).
+- Un bug corrigé = un test qui échoue avant et passe après.
+- Réponses d'erreur : `{ error: { code, message, details? } }` avec le bon statut HTTP.
+
+## Arborescence
+
+```
+relais/
+├── server.js          # createApp() (testable) + start() : CSP, sessions, /api, fallback SPA
+├── config.js          # lecture et contrôle des variables d'env (seul lecteur de process.env)
+├── db/                # connexion, migrate, seed (+ seed/ données), bootstrap, storage (volume), migrations/
+├── jobs/              # branchement node-cron des tâches planifiées
+├── auth/              # mots de passe, sessions, middlewares de rôle
+├── lib/               # validation, erreurs HTTP, requêtes de liste, horloge
+├── tickets/           # socle commun INC/REQ/TASK/CHG : numérotation, journal, audit
+├── incidents/         # priorité, cycle de vie, service
+├── requests/          # catalogue, formulaires dynamiques, tâches
+├── changes/           # workflow, conflits, calendrier
+├── approvals/         # approbations (demandes, CAB)
+├── cmdb/              # CI, relations, graphe
+├── sla/               # heures ouvrées, moteur SLA, job cron
+├── kb/                # articles, recherche FTS5
+├── notifications/     # in-app + canal email (stub)
+├── ai/                # client Anthropic, prompts, schémas de sortie
+├── dashboard/         # requêtes des widgets, layouts
+├── routes/            # un fichier par ressource
+├── public/            # PWA (portail + console)
+├── test/
+└── tools/
+```
+
+## Commandes
+
+```
+npm install
+npm run dev          # serveur avec rechargement
+npm start            # production
+npm test             # node --test
+npm run db:migrate
+npm run db:seed      # base de démo (efface et recrée la base ; refusé en prod sans --force)
+npm run icons        # régénère les icônes PWA
+```
+
+Port par défaut **3100** (3000 est souvent pris par Cairn). Comptes de démo : `*@relais.test`,
+mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
+
+## Variables d'environnement
+
+`PORT`, `NODE_ENV`, `APP_URL`, `DATABASE_PATH`, `SESSION_SECRET`, `ANTHROPIC_API_KEY`,
+`ANTHROPIC_MODEL`, `DEMO_MODE`, `SEED_ON_EMPTY`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CRON_ENABLED`,
+`EMAIL_ENABLED` — tout est documenté dans `.env.example`.
+
+## Journal d'avancement
+
+| Phase | Contenu | Version | État |
+|-------|---------|---------|------|
+| 0 | Cadrage : CLAUDE.md, schéma, arborescence | — | fait |
+| 1 | Socle : structure, migrations, seed, auth, rôles, layout, PWA | v0.1.0 | fait |
+| 2 | Incidents : liste, formulaire, cycle de vie, audit trail | v0.2.0 | à faire |
+| 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | à faire |
+| 4 | SLA + job planifié + notifications | v0.4.0 | à faire |
+| 5 | Dashboard Gridstack + widgets | v0.5.0 | à faire |
+| 6 | Catalogue de services + approbations | v0.6.0 | à faire |
+| 7 | Changements + calendrier | v0.7.0 | à faire |
+| 8 | Base de connaissances + IA | v0.8.0 | à faire |
+| 9 | Prod Railway (volume, env, healthcheck) | v1.0.0 | à faire |
+
+### Phase 0 — cadrage (02/10/2026)
+- Schéma et arborescence validés : table commune `tickets` + tables d'extension, Node 22, bcryptjs,
+  vendor local, zod.
+
+### Phase 1 — socle (02/10/2026)
+- Migration `001_socle` : users, support_groups, group_members, categories, number_sequences, settings, sessions.
+- Auth : login (limité à 10 essais / 15 min par IP+email, même réponse compte connu ou non), logout,
+  /me, préférences (thème), changement de mot de passe. Désactiver un compte ou changer son rôle coupe ses sessions.
+- Rôles cumulatifs `user < agent < manager < admin` (`auth/roles.js`), `requireRole` sur chaque route.
+- Admin : utilisateurs, groupes (membres), catégories, réglages. Le dernier admin actif est protégé.
+- Front : coquille console (barre latérale) et portail (navigation haute), routeur par hash, thème
+  clair/sombre, page de connexion avec comptes de démo, PWA (manifest, sw.js, icônes générées).
+- Tests : `test/auth.test.js` (401, énumération, CSRF, rôles, dernier admin, sessions coupées, healthcheck).

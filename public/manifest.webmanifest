@@ -1,0 +1,20 @@
+{
+  "name": "Relais — support IT",
+  "short_name": "Relais",
+  "description": "Incidents, demandes, changements, CMDB et base de connaissances",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#141920",
+  "theme_color": "#141920",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Signaler un incident", "url": "/#/portal/incident/new" },
+    { "name": "Mes demandes", "url": "/#/portal/tickets" }
+  ]
+}

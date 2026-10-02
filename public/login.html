@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion · Relais</title>
+  <meta name="theme-color" content="#141920">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme-boot.js"></script>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/views.css">
+  <script type="module" src="/js/login.js"></script>
+</head>
+<body class="login-page">
+  <main class="login">
+    <section class="login-brand">
+      <img src="/icons/icon-192.png" alt="" width="56" height="56">
+      <h1>Relais</h1>
+      <p>Incidents, demandes, changements et configuration&nbsp;: tout le support IT au même endroit.</p>
+      <ul class="login-points">
+        <li>Priorités ITIL calculées, SLA en heures ouvrées</li>
+        <li>CMDB et graphe des dépendances</li>
+        <li>Déclaration d’incident assistée par IA</li>
+      </ul>
+    </section>
+    <section class="login-card card">
+      <form id="login-form" class="stack" novalidate>
+        <h2>Connexion</h2>
+        <div class="field">
+          <label for="email">Email</label>
+          <input class="input" id="email" name="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div id="login-error" class="field"><span class="error" role="alert"></span></div>
+        <button class="btn primary" type="submit" style="width:100%;height:40px">Se connecter</button>
+      </form>
+      <div id="demo" class="demo hidden">
+        <h4>Comptes de démonstration</h4>
+        <p class="small muted">Mot de passe&nbsp;: <code id="demo-password"></code></p>
+        <div id="demo-list" class="demo-list"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
