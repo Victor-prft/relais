@@ -7,7 +7,8 @@ const cron = require('node-cron');
  * ce fichier ne fait que les brancher sur node-cron.
  */
 const JOBS = [
-  { name: 'clôture auto des incidents', schedule: '17 * * * *', run: require('../incidents/auto-close').autoCloseResolved }
+  { name: 'clôture auto des incidents', schedule: '17 * * * *', run: require('../incidents/auto-close').autoCloseResolved },
+  { name: 'SLA', schedule: '*/5 * * * *', run: require('../sla/job').runSlaJob }
 ];
 
 function startJobs(db, log = console) {

@@ -24,7 +24,9 @@ const REQUESTERS = [['lea', 6], ['marc', 6], ['chloe', 6], ['julien', 1], ['hele
 const CONTACTS = [['portal', 55], ['phone', 25], ['email', 15], ['chat', 5]];
 
 /** Durées en minutes ouvrées [min, max] selon la priorité. */
-const ASSIGN_DELAY = { 1: [3, 10], 2: [8, 30], 3: [15, 120], 4: [30, 300], 5: [60, 600] };
+const ASSIGN_DELAY = { 1: [2, 8], 2: [4, 18], 3: [10, 75], 4: [30, 300], 5: [60, 600] };
+/** Délai entre l'assignation et la prise en charge effective. */
+const PICKUP_DELAY = { 1: [1, 5], 2: [1, 8], 3: [2, 30], 4: [2, 60], 5: [5, 120] };
 const RESOLVE_EFFORT = { 1: [40, 200], 2: [90, 420], 3: [180, 1100], 4: [400, 2400], 5: [900, 4500] };
 
 function createSimulator(db, refs, now, rnd) {
@@ -123,7 +125,7 @@ function createSimulator(db, refs, now, rnd) {
     ticket = updateTicket(ctx(rnd.chance(0.5) ? agent : lead, t), ticket.id, { assigned_to_id: agent.id });
     if (stop === 'assigned') return { ticket };
 
-    t = later(t, [2, p <= 2 ? 15 : 60], { allHours });
+    t = later(t, PICKUP_DELAY[p], { allHours });
     if (!happens(t)) return { ticket };
     if (rnd.chance(0.6)) addEntry(ctx(agent, t), ticket.id, { kind: 'comment', body: rnd.pick(COMMENTS_AGENT.slice(0, 3)) });
     ticket = updateTicket(ctx(agent, t), ticket.id, { state: 'in_progress' });

@@ -36,6 +36,21 @@ function seedPeople(db) {
   return { users: ids, groups };
 }
 
+/**
+ * Fin du seed : le job SLA tourne à l'heure réelle (avancement, alertes « à
+ * risque » et « dépassé » des tickets ouverts), et les notifications de plus
+ * de 24 h sont marquées lues — une boîte réaliste, pas 400 alertes en attente.
+ */
+function finalize(db, now) {
+  const { runSlaJob } = require('../sla/job');
+  const sla = runSlaJob(db, now);
+  const limit = new Date(now.getTime() - 86400000).toISOString();
+  db.prepare("UPDATE notifications SET read_at = strftime('%Y-%m-%dT%H:%M:%fZ', created_at, '+1 hour') WHERE created_at < ?").run(limit);
+  const unread = db.prepare('SELECT COUNT(*) AS n FROM notifications WHERE read_at IS NULL').get().n;
+  const slas = db.prepare('SELECT COUNT(*) AS n FROM ticket_slas').get().n;
+  return `${slas} SLA (${sla.at_risk} à risque, ${sla.breached} dépassés à l’instant), ${unread} notifications non lues`;
+}
+
 async function seed(db, { log = console, now = new Date() } = {}) {
   const rnd = createRandom();
   const refs = db.transaction(() => seedPeople(db))();
@@ -43,7 +58,8 @@ async function seed(db, { log = console, now = new Date() } = {}) {
 
   const steps = [
     ['cmdb', () => seedCmdb(db, refs, now)],
-    ['incidents', () => seedIncidents(db, refs, now, rnd)]
+    ['incidents', () => seedIncidents(db, refs, now, rnd)],
+    ['finalisation', () => finalize(db, now)]
   ];
   for (const [, run] of steps) {
     const summary = db.transaction(run)();

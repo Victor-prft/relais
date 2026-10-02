@@ -6,3 +6,5 @@
  * les abonnés sont branchés.
  */
 require('../incidents/hooks');
+require('../sla/subscribers');
+require('../notifications/subscribers');

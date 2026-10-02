@@ -12,6 +12,7 @@ import { navigate } from '../../router.js';
 import { getGroups, getCategories, categoryOptions, cached } from '../../state.js';
 import { setTitle } from '../../app.js';
 import { incidentExtras } from './extras.js';
+import { slaPanel } from '../../ui/sla.js';
 
 const getMeta = () => cached('incident-meta', () => api.get('/api/incidents/meta'));
 const levelOptions = [1, 2, 3].map((v) => ({ value: v, label: LEVEL_LABELS[v] }));
@@ -210,6 +211,7 @@ function render(el, { meta, groups, categories, ticket, prefill = {} }) {
             }))
         },
         { id: 'links', label: 'Liens', render: (panel) => panel.append(relationsPanel({ ticketId: t.id, canEdit: t.permissions.work_notes })) },
+        { id: 'sla', label: 'SLA', render: (panel) => panel.append(slaPanel(t.id)) }
       ];
   const tabsEl = tabbed(tabs);
 

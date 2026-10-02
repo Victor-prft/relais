@@ -123,6 +123,10 @@ async function start() {
 
   await require('./db/bootstrap').bootstrap(db, config);
 
+  const { configureChannels } = require('./notifications/service');
+  const { createEmailChannel } = require('./notifications/channels/email');
+  configureChannels([createEmailChannel({ enabled: config.emailEnabled, appUrl: config.appUrl, log: console })]);
+
   const app = createApp({ db });
   if (config.cronEnabled) require('./jobs').startJobs(db);
 

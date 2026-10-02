@@ -10,6 +10,7 @@ import { incidentFormView } from './views/incidents/form.js';
 import { goView, searchView } from './views/search.js';
 import { cmdbListView } from './views/cmdb/list.js';
 import { ciFormView } from './views/cmdb/form.js';
+import { adminSlaView } from './views/admin/sla.js';
 
 /**
  * Table des routes et de la navigation. `space` choisit la coquille (console
@@ -30,7 +31,8 @@ export const CONSOLE_NAV = [
     role: 'admin',
     items: [
       { path: '/admin/users', label: 'Utilisateurs', icon: 'users', role: 'admin' },
-      { path: '/admin/groups', label: 'Groupes', icon: 'users', role: 'admin' }
+      { path: '/admin/groups', label: 'Groupes', icon: 'users', role: 'admin' },
+      { path: '/admin/sla', label: 'SLA et délais', icon: 'clock', role: 'admin' }
     ]
   }
 ];
@@ -59,4 +61,5 @@ export function registerRoutes() {
 
   route('/admin/users', adminUsersView, { title: 'Utilisateurs', role: 'admin' });
   route('/admin/groups', adminGroupsView, { title: 'Groupes', role: 'admin' });
+  route('/admin/sla', adminSlaView, { title: 'SLA et délais', role: 'admin' });
 }

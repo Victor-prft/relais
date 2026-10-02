@@ -11,6 +11,7 @@ const { recordEvent } = require('../tickets/audit');
 const { NUMBER_PATTERN } = require('../tickets/numbering');
 const { escapeLike } = require('../lib/list-query');
 const { ticketView } = require('../tickets/view');
+const { ticketSlas } = require('../sla/engine');
 
 /** Routes communes à tous les types de tickets : journal, activité, liens, recherche. */
 module.exports = function ticketRoutes({ db }) {
@@ -49,6 +50,12 @@ module.exports = function ticketRoutes({ db }) {
     const ticket = requireTicket(db, req.validParams.id);
     assertCanView(db, req.user, ticket);
     res.json(ticketView(req.ctx, ticket));
+  });
+
+  router.get('/:id/slas', params(idParam), (req, res) => {
+    const ticket = requireTicket(db, req.validParams.id);
+    assertCanView(db, req.user, ticket);
+    res.json({ items: ticketSlas(db, ticket.id, req.ctx.now) });
   });
 
   router.get('/:id/activity', params(idParam), (req, res) => {

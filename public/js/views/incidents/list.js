@@ -5,6 +5,7 @@ import { stateBadge, priorityBadge, personCell, STATE_LABELS } from '../../ui/ba
 import { formatRelative, formatDateTime, PRIORITY_LABELS } from '../../format.js';
 import { navigate } from '../../router.js';
 import { getGroups, getCategories, categoryOptions } from '../../state.js';
+import { slaCell } from '../../ui/sla.js';
 
 const INCIDENT_STATES = ['new', 'assigned', 'in_progress', 'on_hold', 'resolved', 'closed', 'canceled'];
 
@@ -13,6 +14,8 @@ export const INCIDENT_COLUMNS = [
   { key: 'title', label: 'Titre', className: 'title-cell', render: (r) => h('span', { title: r.title }, r.title) },
   { key: 'priority', label: 'Priorité', render: (r) => priorityBadge(r.priority) },
   { key: 'state', label: 'État', render: (r) => stateBadge(r.state) },
+  { key: 'sla', label: 'SLA', defaultDir: 'desc', render: (r) => slaCell(r) },
+  { key: 'sla_due', label: 'Échéance SLA', render: (r) => (r.sla_due ? h('span', { title: formatDateTime(r.sla_due) }, formatRelative(r.sla_due)) : '—') },
   { key: 'assigned_to', label: 'Assigné à', render: (r) => personCell(r.assigned_to) },
   { key: 'assignment_group', label: 'Groupe' },
   { key: 'requester', label: 'Demandeur' },
@@ -40,6 +43,7 @@ export async function incidentFilterFields() {
     { key: 'opened_at', label: 'Date d’ouverture', type: 'date' },
     { key: 'resolved_at', label: 'Date de résolution', type: 'date' },
     { key: 'title', label: 'Titre', type: 'text' },
+    { key: 'sla_breached', label: 'SLA dépassé', type: 'bool' },
     { key: 'active', label: 'Ouvert', type: 'bool' }
   ];
 }
@@ -52,6 +56,7 @@ export const INCIDENT_PRESETS = [
   { id: 'groups', label: 'File de mes groupes', filters: [ACTIVE, { field: 'assignment_group_id', op: 'in', value: '@mygroups', label: 'mes groupes' }] },
   { id: 'unassigned', label: 'Non assignés', filters: [ACTIVE, { field: 'assigned_to_id', op: 'empty', value: null }] },
   { id: 'critical', label: 'P1 et P2 ouverts', filters: [ACTIVE, { field: 'priority', op: 'in', value: [1, 2], label: 'P1, P2' }] },
+  { id: 'sla', label: 'SLA à risque ou dépassés', filters: [ACTIVE, { field: 'sla', op: 'gte', value: 0.75, label: '75 %' }], sort: 'sla', dir: 'desc' },
   { id: 'resolved', label: 'Résolus (7 jours)', filters: [{ field: 'resolved_at', op: 'gte', value: '@days:-7', label: '7 derniers jours' }], sort: 'resolved_at', dir: 'desc' },
   { id: 'all', label: 'Tous les incidents', filters: [] }
 ];
@@ -67,7 +72,7 @@ export async function incidentListView(el) {
       key: 'incidents',
       endpoint: '/api/incidents',
       columns: INCIDENT_COLUMNS,
-      defaultColumns: ['number', 'title', 'priority', 'state', 'assigned_to', 'assignment_group', 'opened_at'],
+      defaultColumns: ['number', 'title', 'priority', 'state', 'sla', 'assigned_to', 'assignment_group', 'opened_at'],
       filterFields,
       presets: INCIDENT_PRESETS,
       onOpen: (row) => navigate(`/incidents/${row.id}`)

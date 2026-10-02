@@ -17,7 +17,8 @@ const REQUESTER_ACTIONS = {
 /** Fiche d'un ticket vue du demandeur. */
 export async function portalTicketView(el, { id }) {
   mount(el, loading());
-  const t = await api.get(`/api/tickets/${id}`);
+  const [t, slas] = await Promise.all([api.get(`/api/tickets/${id}`), api.get(`/api/tickets/${id}/slas`).catch(() => ({ items: [] }))]);
+  const resolution = slas.items.find((s) => s.target === 'resolution' && s.stage !== 'canceled');
   setTitle(`${t.number} · ${t.title}`);
 
   const act = async (state) => {
@@ -72,6 +73,8 @@ export async function portalTicketView(el, { id }) {
           ['Pris en charge par', t.assigned_to_name || 'En attente d’affectation'],
           ['Groupe', t.assignment_group_name],
           ['Ouvert le', formatDateTime(t.opened_at)],
+          resolution && resolution.stage === 'running' ? ['Objectif de résolution', formatDateTime(resolution.due_at)] : null,
+          resolution && resolution.stage === 'paused' ? ['Objectif de résolution', 'suspendu en attendant votre réponse'] : null,
           ['Résolu le', t.resolved_at ? formatDateTime(t.resolved_at) : null]
         ]))
       )

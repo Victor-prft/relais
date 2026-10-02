@@ -40,6 +40,19 @@ const incidentList = {
     opened_at: { sql: 't.opened_at', sortable: true, filter: 'date' },
     updated_at: { sql: 't.updated_at', sortable: true, filter: 'date' },
     resolved_at: { sql: 't.resolved_at', sortable: true, filter: 'date' },
+    // SLA : avancement mis en cache par le moteur et le job (le plus avancé des SLA actifs).
+    sla: {
+      sql: "(SELECT MAX(s.percent) FROM ticket_slas s WHERE s.ticket_id = t.id AND s.stage IN ('running', 'paused'))",
+      sortable: true,
+      filter: 'number'
+    },
+    sla_paused: { sql: "(SELECT COUNT(*) FROM ticket_slas s WHERE s.ticket_id = t.id AND s.stage = 'paused')" },
+    sla_due: { sql: "(SELECT MIN(s.due_at) FROM ticket_slas s WHERE s.ticket_id = t.id AND s.stage = 'running')", sortable: true, filter: 'date' },
+    sla_breached: {
+      sql: "CASE WHEN EXISTS (SELECT 1 FROM ticket_slas s WHERE s.ticket_id = t.id AND s.has_breached = 1 AND s.stage <> 'canceled') THEN 1 ELSE 0 END",
+      sortable: true,
+      filter: 'bool'
+    },
     active: { sql: "CASE WHEN t.state IN ('new', 'assigned', 'in_progress', 'on_hold') THEN 1 ELSE 0 END", filter: 'bool' }
   }
 };

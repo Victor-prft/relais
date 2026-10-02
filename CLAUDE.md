@@ -70,6 +70,13 @@ les tickets dont il est demandeur ou bénéficiaire.
 - **Propagation d'impact CMDB** : portée par `ci_relation_types.impact` (`to_source` / `to_target`),
   pas codée en dur ; `cmdb/graph.js` borne la récursion (`MAX_DEPTH`).
 - **Cytoscape** : identifiants de nœuds préfixés (`n12`) — `#12` n'est pas un sélecteur valide.
+- **SLA** : le temps ouvré se calcule jour civil local par jour civil (`sla/business-time.js`), les
+  plages converties en UTC (changements d'heure gérés). Points d'arrêt : `elapsed_minutes` +
+  temps depuis `last_resumed_at`. `ticket_slas.percent` est un cache (job toutes les 5 min +
+  chaque transition) : ne jamais l'utiliser pour une décision, recalculer via `describe`.
+  Modifier une définition ne touche pas les SLA en cours.
+- **Notifications** : jamais à l'auteur de l'action, jamais une note interne au demandeur
+  (`notifications/subscribers.js`). Canal email = interface prête, aucun envoi (`EMAIL_ENABLED`).
 - **Listes** : `lib/list-query.js` — champs, opérateurs et tri en liste blanche (définition par
   liste, ex. `incidents/list.js`), valeurs en paramètres nommés. Symboles `@me`, `@mygroups`, `@days:-7`.
 
@@ -137,7 +144,7 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 | 1 | Socle : structure, migrations, seed, auth, rôles, layout, PWA | v0.1.0 | fait |
 | 2 | Incidents : liste, formulaire, cycle de vie, audit trail | v0.2.0 | fait |
 | 3 | CMDB + liens incidents/CI + graphe | v0.3.0 | fait |
-| 4 | SLA + job planifié + notifications | v0.4.0 | à faire |
+| 4 | SLA + job planifié + notifications | v0.4.0 | fait |
 | 5 | Dashboard Gridstack + widgets | v0.5.0 | à faire |
 | 6 | Catalogue de services + approbations | v0.6.0 | à faire |
 | 7 | Changements + calendrier | v0.7.0 | à faire |
@@ -193,3 +200,25 @@ mot de passe `relais2026` (affichés sur /login quand `DEMO_MODE` est actif).
 - Seed : 30 CI, 37 relations ; les incidents pointent vers des CI plausibles.
 - Tests : formulaires dynamiques, règles de relation, propagation d'impact (dépendance, hébergement,
   réseau, boucle), voisinage, audit CI, API (accès, liste, graphe, incidents liés, CI inexistant → 400).
+
+### Phase 4 — SLA et notifications (03/10/2026)
+- Migration `004` : business_calendars (heures ouvrées lun–ven 8 h–18 h + 24 h/24), business_hours,
+  holidays (fériés français 2026-2027), sla_definitions (incidents : prise en charge + résolution par
+  priorité, P1 en 24 h/24 ; demandes : traitement), ticket_slas, notifications.
+- Moteur `sla/engine.js` : démarrage rétroactif à l'ouverture, pause « En attente », arrêt prise en
+  charge (En cours / Résolu) et résolution (Résolu), reprise à la réouverture, annulation, changement
+  de priorité qui remplace le SLA en conservant le temps écoulé. Statuts : dans les temps / à risque
+  (seuil réglable, 75 %) / dépassé / respecté.
+- Job `sla/job.js` (node-cron, 5 min) : avancement + une seule alerte « à risque » (agent ou groupe)
+  et « dépassé » (+ manager du groupe).
+- Notifications : assignation, file de groupe (manager si P1/P2), commentaires dans les deux sens,
+  note interne, résolution, attente de réponse, réouverture. Cloche avec compteur (30 s), panneau,
+  tout marquer lu. Canal email abstrait (`notifications/channels/email.js`).
+- Front : colonne et filtre SLA dans la liste (vue « SLA à risque ou dépassés »), onglet SLA de la fiche,
+  objectif de résolution côté portail, page admin « SLA et délais » (définitions, calendriers, fériés,
+  réglages).
+- Seed : 300 SLA joués avec les incidents (≈ 96 % de prises en charge et 83 % de résolutions dans
+  les temps), job SLA à l'heure réelle, notifications de plus de 24 h lues.
+- Tests : temps ouvré (week-end, férié, heure d'été/hiver, plages coupées, aller-retour sur 200
+  tirages), moteur SLA (pause, reprise, arrêt, réouverture, priorité, P1 24/7, annulation), job
+  (alerte unique), routage des notifications, API.

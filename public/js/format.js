@@ -21,15 +21,18 @@ export function formatRelative(iso, now = Date.now()) {
   return formatDate(iso);
 }
 
-/** Durée en minutes → « 2 h 15 », « 3 j 4 h ». */
-export function formatMinutes(minutes) {
+/**
+ * Durée en minutes → « 2 h 15 », « 3 j 4 h ». `days: false` garde les heures
+ * (temps ouvré : 50 h ouvrées ne font pas « 2 j 2 h »).
+ */
+export function formatMinutes(minutes, { days: useDays = true } = {}) {
   if (minutes === null || minutes === undefined) return '—';
   const m = Math.round(Math.abs(minutes));
   const sign = minutes < 0 ? '−' : '';
   if (m < 60) return `${sign}${m} min`;
   const hours = Math.floor(m / 60);
   const rest = m % 60;
-  if (hours < 24) return `${sign}${hours} h${rest ? ` ${String(rest).padStart(2, '0')}` : ''}`;
+  if (hours < 24 || !useDays) return `${sign}${hours} h${rest ? ` ${String(rest).padStart(2, '0')}` : ''}`;
   const days = Math.floor(hours / 24);
   const h = hours % 24;
   return `${sign}${days} j${h ? ` ${h} h` : ''}`;
