@@ -107,8 +107,11 @@ function createApp({ db, appConfig = config, ai = null }) {
 
   app.get('/login', (req, res) => (req.user ? res.redirect('/') : res.sendFile(path.join(PUBLIC_DIR, 'login.html'))));
   // Fallback SPA : toute autre route GET renvoie le shell (routage côté client).
+  // Un fichier absent (chemin avec extension) répond 404 : servi en 200, le
+  // HTML du shell serait mis en cache par le service worker à la place du script.
   app.use((req, res, next) => {
     if (req.method !== 'GET') return next();
+    if (path.extname(req.path)) return res.status(404).type('text/plain').send('Introuvable');
     if (!req.user) return res.redirect('/login');
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   });

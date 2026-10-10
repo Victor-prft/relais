@@ -96,4 +96,14 @@ test('authentification et contrôle des rôles', async (t) => {
     assert.equal(res.status, 200);
     assert.equal(res.body.status, 'ok');
   });
+
+  await t.test('un fichier statique absent répond 404, pas le shell', async () => {
+    // Sinon le service worker met le HTML en cache sous le nom du script.
+    const c = ctx.client();
+    await c.login('admin@x.test');
+    assert.equal((await c.get('/vendor/absent.js')).status, 404);
+    const route = await c.get('/incidents');
+    assert.equal(route.status, 200);
+    assert.match(route.headers.get('content-type'), /html/);
+  });
 });
